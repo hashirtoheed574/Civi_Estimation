@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Civil Estimates — AI-powered floor plan analysis. Detect doors, windows, and walls from architectural floor plans.">
+    <title>Civil Estimates — Floor Plan Detector</title>
+    <link rel="stylesheet" href="/static/css/fonts.css?v=8.0">
+    <link rel="stylesheet" href="/static/css/styles.css?v=8.1">
+    <link rel="stylesheet" href="/static/css/animations.css?v=8.1">
+</head>
+
+<body>
+    <!-- ─── ANIMATED BACKGROUND ──────────────────────────────────────── -->
+    <div class="bg-grid"></div>
+    <div class="bg-gradient-orbs"></div>
+
+    <!-- ─── NAVBAR ────────────────────────────────────────────────────── -->
+    <nav class="navbar" id="navbar">
+        <div class="navbar-brand">
+            <div class="navbar-icon">
+                <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="16" width="32" height="20" rx="2" stroke="currentColor" stroke-width="2.5" />
+                    <path d="M12 36V20" stroke="currentColor" stroke-width="2" />
+                    <path d="M28 36V20" stroke="currentColor" stroke-width="2" />
+                    <rect x="16" y="24" width="8" height="12" rx="1" stroke="currentColor" stroke-width="2" />
+                    <path d="M8 16L20 6L32 16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                    <rect x="6" y="22" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5" />
+                    <rect x="30" y="22" width="4" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="navbar-title">Civil Estimates</h1>
+                <p class="navbar-subtitle">AI Floor Plan Analysis</p>
+            </div>
+        </div>
+        <div class="navbar-status" id="navbarStatus">
+            <span class="status-dot"></span>
+            <span>Model Ready</span>
+        </div>
+    </nav>
+
+    <!-- ─── MAIN CONTENT (single screen) ──────────────────────────────── -->
+    <main class="main-content" id="mainContent">
+        <!-- LEFT: Upload Area -->
+        <div class="upload-panel">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content" id="uploadContent">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M32 44V20M32 20L22 30M32 20L42 30" stroke="currentColor" stroke-width="3"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M52 40V48C52 50.2091 50.2091 52 48 52H16C13.7909 52 12 50.2091 12 48V40"
+                                stroke="currentColor" stroke-width="3" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <p class="upload-text">Drop your floor plan here</p>
+                    <p class="upload-subtext">or <span class="upload-browse" id="uploadBrowse">browse files</span></p>
+                    <p class="upload-formats">Supports: PNG, JPG, JPEG, BMP, PDF</p>
+                </div>
+                <div class="upload-preview" id="uploadPreview" style="display:none;">
+                    <img id="previewImage" alt="Floor plan preview">
+                    <div class="preview-overlay">
+                        <button class="btn btn-secondary btn-sm" id="changeFileBtn">Change</button>
+                    </div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*,.pdf,application/pdf" hidden>
+            </div>
+            <button class="btn btn-primary btn-analyze" id="analyzeBtn" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                Analyze
+            </button>
+        </div>
+
+        <!-- RIGHT: Results Panel -->
+        <div class="results-panel" id="resultsPanel">
+            <!-- Initial empty state -->
+            <div class="panel-empty" id="panelEmpty">
+                <div class="empty-icon">
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="8" y="12" width="48" height="40" rx="4" stroke="currentColor" stroke-width="2.5" />
+                        <path d="M20 28h24M20 36h16M20 44h20" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+                <p class="empty-title">Detection Results</p>
+                <p class="empty-text">Upload a floor plan and click Analyze to see results</p>
+            </div>
+
+            <!-- Loading state -->
+            <div class="panel-loading" id="panelLoading" style="display:none;">
+                <!-- Animated scan effect -->
+                <div class="loading-scanner">
+                    <div class="scanner-icon">
+                        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="8" y="8" width="48" height="48" rx="4" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4" />
+                            <path d="M20 28h24M20 36h16M20 44h20" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.5" />
+                            <circle cx="32" cy="32" r="14" stroke="currentColor" stroke-width="2" opacity="0.3" />
+                            <path d="M32 18v28M18 32h28" stroke="currentColor" stroke-width="1" opacity="0.15" />
+                        </svg>
+                        <div class="scanner-pulse"></div>
+                    </div>
+                </div>
+
+                <p class="loading-title" id="loadingTitle">Analyzing Floor Plan</p>
+                <p class="loading-text" id="loadingText">Preparing image...</p>
+
+                <!-- Step indicators -->
+                <div class="loading-steps" id="loadingSteps">
+                    <div class="loading-step" id="step0" data-step="0">
+                        <div class="step-icon">📄</div>
+                        <span class="step-label">Processing image</span>
+                        <div class="step-status"></div>
+                    </div>
+                    <div class="loading-step" id="step1" data-step="1">
+                        <div class="step-icon">🚪</div>
+                        <span class="step-label">Detecting doors & windows</span>
+                        <div class="step-status"></div>
+                    </div>
+                    <div class="loading-step" id="step2" data-step="2">
+                        <div class="step-icon">🧱</div>
+                        <span class="step-label">Detecting walls</span>
+                        <div class="step-status"></div>
+                    </div>
+                    <div class="loading-step" id="step3" data-step="3">
+                        <div class="step-icon">📐</div>
+                        <span class="step-label">Computing floor area</span>
+                        <div class="step-status"></div>
+                    </div>
+                    <div class="loading-step" id="step4" data-step="4">
+                        <div class="step-icon">📊</div>
+                        <span class="step-label">Compiling results</span>
+                        <div class="step-status"></div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Results state -->
+            <div class="panel-results" id="panelResults" style="display:none;">
+                <h3 class="results-heading">Detection Summary</h3>
+                <div class="summary-cards" id="summaryCards">
+                    <!-- Dynamically injected -->
+                </div>
+                <button class="btn btn-primary btn-view" id="viewDetectionsBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="m21 15-5-5L5 21" />
+                    </svg>
+                    View Detected Objects
+                </button>
+                <button class="btn btn-secondary btn-new" id="newAnalysisBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M12 5v14M5 12h14" />
+                    </svg>
+                    New Analysis
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ─── FOOTER ────────────────────────────────────────────────────── -->
+    <footer class="footer">
+        <p>Civil Estimates — Final Year Project &copy; 2026</p>
+    </footer>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MODAL 1: DETECTED OBJECTS — Image + Filters + Action Buttons
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="modalOverlay" style="display:none;">
+        <div class="modal" id="detectionModal">
+            <div class="modal-header">
+                <h3 class="modal-title">Detected Objects</h3>
+                <button class="modal-close" id="modalCloseBtn">&times;</button>
+            </div>
+            <div class="modal-filters">
+                <button class="filter-btn active" data-filter="all" id="filterAll">All Objects</button>
+                <button class="filter-btn" data-filter="Single Door" id="filterDoors">Doors</button>
+                <button class="filter-btn" data-filter="Double Door" id="filterDoubleDoors">Double Doors</button>
+                <button class="filter-btn" data-filter="Window" id="filterWindows">Windows</button>
+                <button class="filter-btn" data-filter="Wall" id="filterWalls">Walls</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body-split">
+                    <div class="modal-image-wrapper" id="modalImageWrapper">
+                        <div class="modal-image-container" id="modalImageContainer">
+                            <img id="modalAnnotatedImage" alt="Annotated floor plan">
+                        </div>
+                        <div class="zoom-controls" id="zoomControls">
+                            <button class="zoom-btn" id="zoomInBtn" title="Zoom In">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
+                            </button>
+                            <span class="zoom-level" id="zoomLevel">100%</span>
+                            <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M8 11h6"/></svg>
+                            </button>
+                            <button class="zoom-btn" id="zoomResetBtn" title="Reset Zoom (double-click image)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3.51 9a9 9 0 0114.85-3.36L21 8M3 16l2.64 2.36A9 9 0 0020.49 15"/><path d="M21 3v5h-5M3 21v-5h5"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Detection Legend Panel -->
+                    <div class="detection-legend" id="detectionLegend">
+                        <h4 class="legend-title">Detections</h4>
+                        <div class="legend-items" id="legendItems">
+                            <!-- Dynamically populated by JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-loading" id="modalLoading" style="display:none;">
+                    <div class="spinner"></div>
+                    <p>Filtering detections...</p>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-action btn-confidence" id="openConfidenceBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                    Confidence Details
+                </button>
+                <button class="btn btn-action btn-cost" id="openCostBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    Cost Estimation
+                </button>
+                <button class="btn btn-action btn-excel" id="openExcelBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h2M8 17h2M14 13h2M14 17h2"/></svg>
+                    Excel Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MODAL 2: CONFIDENCE DETAILS — Per-element accuracy
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="confidenceOverlay" style="display:none;">
+        <div class="modal modal--medium" id="confidenceModal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+                    Detection Confidence
+                </h3>
+                <button class="modal-close" id="confidenceCloseBtn">&times;</button>
+            </div>
+            <div class="confidence-body">
+                <div class="detection-table-scroll">
+                    <table class="detection-table" id="confidenceTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Type</th>
+                                <th>Confidence</th>
+                                <th>Width (px)</th>
+                                <th>Height (px)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="confidenceTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MODAL 3: COST ESTIMATION — Per-element editable height + price
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="costOverlay" style="display:none;">
+        <div class="modal modal--wide" id="costModal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+                    Cost Estimation
+                </h3>
+                <button class="modal-close" id="costCloseBtn">&times;</button>
+            </div>
+            <div class="cost-body">
+                <!-- Global Settings -->
+                <div class="cost-global-row">
+                    <div class="cost-global">
+                        <label class="price-label">Pixel-to-Foot Scale</label>
+                        <input type="number" class="price-input" id="scaleFactorInput" value="20" min="1" step="1">
+                        <p class="price-hint" id="scaleFactorHint">Default: 20 pixels per foot (adjustable)</p>
+                    </div>
+                    <div class="cost-global">
+                        <label class="price-label">Wall Height (feet)</label>
+                        <input type="number" class="price-input" id="wallHeightInput" value="10" min="1" step="0.5">
+                        <p class="price-hint">Used for material estimates</p>
+                    </div>
+                </div>
+
+                <!-- Section: Wall & Floor Area (shown first for context) -->
+                <div class="cost-section-header" id="wallAreaSection" style="display:none;">🧱 Wall &amp; Floor Area</div>
+                <div class="area-stats" id="areaStats" style="display:none;">
+                    <div class="area-stat-card">
+                        <span class="area-stat-label">Total Wall Area</span>
+                        <span class="area-stat-value" id="wallAreaFt">—</span>
+                    </div>
+                    <div class="area-stat-card">
+                        <span class="area-stat-label">Floor Area</span>
+                        <span class="area-stat-value" id="floorAreaFt">—</span>
+                    </div>
+                    <div class="area-stat-card">
+                        <span class="area-stat-label">Walls Detected</span>
+                        <span class="area-stat-value" id="wallCountStat">—</span>
+                    </div>
+                </div>
+
+
+                <!-- Section: Material & Construction Costs -->
+                <div class="cost-section-header" id="materialSection">🎨 Material &amp; Construction Estimation</div>
+                <div class="material-costs" id="materialCosts">
+                    <table class="cost-table" id="materialTable">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Rate (Rs)</th>
+                                <th>Cost (Rs)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialTableBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Section: Doors & Windows (per-detection) -->
+                <div id="doorWindowSection">
+                    <div class="cost-section-header" id="doorWindowHeader">🚪 Doors &amp; Windows (Per Detection)</div>
+                    <div class="cost-table-scroll">
+                        <table class="cost-table" id="costTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Type</th>
+                                    <th>Option</th>
+                                    <th>Height (ft)</th>
+                                    <th>Cost (Rs)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="costTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Grand Total -->
+                <div class="price-total">
+                    <span class="price-total-label">Grand Total</span>
+                    <span class="price-total-amount" id="grandTotalResult">Rs 0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MODAL 5: MATERIAL BREAKDOWN — Individual Cost Cards
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="materialBreakdownOverlay" style="display:none;">
+        <div class="modal modal--medium" id="materialBreakdownModal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                    Material Cost Breakdown
+                </h3>
+                <button class="modal-close" id="materialBreakdownCloseBtn">&times;</button>
+            </div>
+            <div class="breakdown-body" id="breakdownBody">
+                <!-- Dynamically populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MODAL 4: EXCEL REPORT — Detected vs Actual Counts
+         ═══════════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="excelOverlay" style="display:none;">
+        <div class="modal modal--medium" id="excelModal">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h2M8 17h2M14 13h2M14 17h2"/></svg>
+                    Excel Report — Detection Record
+                </h3>
+                <button class="modal-close" id="excelCloseBtn">&times;</button>
+            </div>
+            <div class="excel-body">
+                <p class="excel-desc">Compare AI-detected counts with the actual number of doors & windows. Enter actual counts, then export to the <strong>Detection_Record.xlsx</strong> file in your project folder. Each export appends a new row.</p>
+                <div class="detection-table-scroll">
+                    <table class="detection-table excel-table" id="excelTable">
+                        <thead>
+                            <tr>
+                                <th>Element</th>
+                                <th>AI Detected</th>
+                                <th>Actual Count</th>
+                                <th>Difference</th>
+                            </tr>
+                        </thead>
+                        <tbody id="excelTableBody">
+                            <!-- Dynamically populated -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="excelFeedback" class="excel-feedback" style="display:none;"></div>
+                <button class="btn btn-primary btn-download-excel" id="downloadExcelBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                    <span id="excelBtnText">Export Result to Excel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js?v=12.1"></script>
+</body>
+
+</html>
