@@ -1,0 +1,59 @@
+# ── Python ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environment ─────────────────────────────
+venv/
+env/
+.venv/
+
+# ── IDE / Editor ─────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS Files ─────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ── Dev-only markdown notes (not needed to run) ─────
+DEV_LOG.md
+instructions.md
+instructions2.md
+instructions3.md
+flaws.md
+refinements.md
+filtering.md
+fronend_skill.md
+new_tasks.md
+towards_final_touch.md
+walkthrough.md
+
+# ── Backend temp / debug files ───────────────────────
+backend/past_*.txt
+backend/step_*.txt
+backend/written_app_js_*.js
+backend/final_call.md
+backend/image/
+
+# ── Standalone dev scripts (not part of the app) ────
+filtering.py
+floor_area.py
+backend/save_result.py
+backend/test_detection.py
+
+# ── Sample plans & evaluation data (excluded per user choice) ──
+Sample_Plans/
+Sample_Plan.pdf
+Detection_Record.xlsx
+confusion_matrices.png
+
+# ── Gemini agent config ──────────────────────────────
+.agents/
